@@ -10,7 +10,7 @@ To attempt to make the time of searching for the correct app shorter, we wish to
 
 unzip lsapp.tsv.gz and put lsapp.tsv into root level of project
 
-## Create conda environment
+### Create conda environment
 
 `conda create --name next_app_prediction python=3.10`
 
