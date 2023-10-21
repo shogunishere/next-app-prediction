@@ -15,3 +15,7 @@ To attempt to make the time of searching for the correct app shorter, we wish to
 `conda activate next_app_prediction`
 
 optional(open with VsCode): `code .`
+
+## Acknowledgments
+
+Dataset used from this repository: https://github.com/aliannejadi/LSApp
