@@ -18,6 +18,8 @@ unzip lsapp.tsv.gz and put lsapp.tsv into root level of project
 
 optional(open with VsCode): `code .`
 
+make sure `next_app_prediction` is used as Python environment when running cells
+
 ## Acknowledgments
 
 Dataset used from this repository: https://github.com/aliannejadi/LSApp
