@@ -8,13 +8,17 @@ To attempt to make the time of searching for the correct app shorter, we wish to
 
 `cd next-app-prediction`
 
-## Create conda environment
+unzip lsapp.tsv.gz and put lsapp.tsv into root level of project
+
+### Create conda environment
 
 `conda create --name next_app_prediction python=3.10`
 
 `conda activate next_app_prediction`
 
 optional(open with VsCode): `code .`
+
+make sure `next_app_prediction` is used as Python environment when running cells
 
 ## Acknowledgments
 
