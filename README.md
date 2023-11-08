@@ -16,7 +16,7 @@ unzip lsapp.tsv.gz and put lsapp.tsv into root level of project
 
 `conda activate next_app_prediction`
 
-optional(open with VsCode): `code .`
+optional (open with VsCode): `code .`
 
 make sure `next_app_prediction` is used as Python environment when running cells
 
