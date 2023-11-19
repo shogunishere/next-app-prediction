@@ -10,6 +10,6 @@ converter._experimental_lower_tensor_list_ops = False
 converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS, tf.lite.OpsSet.SELECT_TF_OPS]
 tflite_model = converter.convert()
 
-# Save the model
+# Save the model  dsfa
 with open('./model/model.tflite', 'wb') as f:
     f.write(tflite_model)
