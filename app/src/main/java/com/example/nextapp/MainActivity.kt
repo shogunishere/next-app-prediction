@@ -14,9 +14,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import com.example.nextapp.ui.theme.NextAppTheme
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.DataOutputStream
@@ -24,7 +27,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
-import java.lang.Long.parseLong
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
@@ -42,29 +44,34 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     color = MaterialTheme.colorScheme.background) {
                     // Call the function to get usage stats
-                    getUsageStats()
+                    GetUsageStats()
                 }
             }
         }
     }
 
+    private var usageStatsJob: Job? = null
 
+    @OptIn(DelicateCoroutinesApi::class)
     @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
-    fun getUsageStats() {
+    fun GetUsageStats() {
         if (hasUsageStatsPermission(this)) {
             // Start collecting usage stats
 
             // UsageStatsManager initialization
             val usm = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
+            //cancel task if existing
+            usageStatsJob?.cancel()
+
             // Use a CoroutineScope to launch a coroutine
-            GlobalScope.launch(Dispatchers.Main) {
-                while (true) {
+            usageStatsJob = GlobalScope.launch(Dispatchers.Main) {
+                while (isActive) {
                     // Query usage stats
                     val appList = usm.queryUsageStats(
                         UsageStatsManager.INTERVAL_DAILY,
-                        System.currentTimeMillis() - 1000 * 10,
+                        System.currentTimeMillis() - 1000 * 60 * 5, // 5 minutes in millisec
                         System.currentTimeMillis()
                     )
 
@@ -87,7 +94,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     // Delay for 10 seconds before the next iteration
-                    delay(10_000)
+                    delay(5 * 60 * 1000)
                 }
             }
         } else {
@@ -135,15 +142,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("SimpleDateFormat")
     private fun getDateTime(s: Long): String? {
-        try {
+        return try {
             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS")
             val netDate = Date(s)
-            return sdf.format(netDate)
+            sdf.format(netDate)
         } catch (e: Exception) {
-            return e.toString()
+            e.toString()
         }
     }
+    @OptIn(DelicateCoroutinesApi::class)
     private fun sendDataToServer(currentApp: String, timeStamp: Long) {
         GlobalScope.launch(Dispatchers.IO) {
             try {
