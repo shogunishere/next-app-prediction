@@ -17,9 +17,7 @@ import com.example.nextapp.ui.theme.NextAppTheme
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.DataOutputStream
@@ -50,9 +48,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private var usageStatsJob: Job? = null
 
-    @OptIn(DelicateCoroutinesApi::class)
     @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
     fun GetUsageStats() {
@@ -62,12 +58,9 @@ class MainActivity : ComponentActivity() {
             // UsageStatsManager initialization
             val usm = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
 
-            //cancel task if existing
-            usageStatsJob?.cancel()
-
             // Use a CoroutineScope to launch a coroutine
-            usageStatsJob = GlobalScope.launch(Dispatchers.Main) {
-                while (isActive) {
+            GlobalScope.launch(Dispatchers.Main) {
+                while (true) {
                     // Query usage stats
                     val appList = usm.queryUsageStats(
                         UsageStatsManager.INTERVAL_DAILY,
