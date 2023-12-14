@@ -59,12 +59,18 @@ class UsageStatsService : Service() {
                     }
 
                     if (mySortedMap.isNotEmpty()) {
-                        val currentApp = mySortedMap[mySortedMap.lastKey()]!!.packageName
-                        val timeStamp = mySortedMap[mySortedMap.lastKey()]!!.lastTimeUsed
+                        for (usageStats in mySortedMap.values) {
+                            val currentApp = usageStats.packageName
 
-                        // Send data to CSV
-                        sendDataToCsv(currentApp, timeStamp)
-                        Log.d("AppList", "sent")
+                            // Check if the current app ends with "android.launcher"
+                            if (!currentApp.endsWith("android.launcher")) {
+                                val timeStamp = usageStats.lastTimeUsed
+
+                                // Send data to CSV
+                                sendDataToCsv(currentApp, timeStamp)
+                                Log.d("AppList", "sent")
+                            }
+                        }
                     }
                 }
 
@@ -98,29 +104,34 @@ class UsageStatsService : Service() {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
+    private var lastRecordedApp: String? = null
     private fun sendDataToCsv(currentApp: String, timeStamp: Long) {
         val fileName = "usage_data.csv"
-
         val datetime = getDateTime(timeStamp)
-        val data = "$datetime,$currentApp\n"
-        val file = File(getExternalFilesDir(null), fileName)
 
-        try {
-            FileOutputStream(file, true).use { fos ->
-                OutputStreamWriter(fos).use { writer ->
-                    writer.write(data)
-                    Log.d("FileWrite", "Data written to file: $data")
+        if (currentApp != lastRecordedApp) {
+            val data = "$datetime,$currentApp\n"
+            val file = File(getExternalFilesDir(null), fileName)
+
+            try {
+                FileOutputStream(file, true).use { fos ->
+                    OutputStreamWriter(fos).use { writer ->
+                        writer.write(data)
+                        Log.d("FileWrite", "Data written to file: $data")
+                    }
                 }
-            }
 
-            if (file.length() == 0L) {
-                Log.w("FileCheck", "Warning: File is empty.")
-            } else {
-                Log.d("FileCheck", "File size after write: ${file.length()} bytes.")
+                if (file.length() == 0L) {
+                    Log.w("FileCheck", "Warning: File is empty.")
+                } else {
+                    Log.d("FileCheck", "File size after write: ${file.length()} bytes.")
+                }
+
+                lastRecordedApp = currentApp
+            } catch (e: IOException) {
+                e.printStackTrace()
+                Log.e("FileWriteError", "Error writing to file", e)
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Log.e("FileWriteError", "Error writing to file", e)
         }
     }
 
