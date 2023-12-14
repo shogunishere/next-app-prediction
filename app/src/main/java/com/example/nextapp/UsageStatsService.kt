@@ -47,7 +47,7 @@ class UsageStatsService : Service() {
                 val usm = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
                 val appList = usm.queryUsageStats(
                     UsageStatsManager.INTERVAL_DAILY,
-                    System.currentTimeMillis() - 5 * 60 * 1000L,
+                    System.currentTimeMillis() - 15 * 1000L,
                     System.currentTimeMillis()
                 )
 
@@ -59,27 +59,21 @@ class UsageStatsService : Service() {
                     }
 
                     if (mySortedMap.isNotEmpty()) {
-                        for (usageStats in mySortedMap.values) {
-                            val currentApp = usageStats.packageName
+                        val currentApp = mySortedMap[mySortedMap.lastKey()]!!.packageName
+                        val timeStamp = mySortedMap[mySortedMap.lastKey()]!!.lastTimeUsed
 
-                            // Check if the current app ends with "android.launcher"
-                            if (!currentApp.endsWith("android.launcher")) {
-                                val timeStamp = usageStats.lastTimeUsed
-
-                                // Send data to CSV
-                                sendDataToCsv(currentApp, timeStamp)
-                                Log.d("AppList", "sent")
-                            }
-                        }
+                        // Send data to CSV
+                        sendDataToCsv(currentApp, timeStamp)
+                        Log.d("AppList", "sent")
                     }
                 }
 
-                // Delay for 10 seconds before the next iteration
-                delay(5 * 60 * 1000L)
+                // Delay for 20 seconds before the next iteration
+                delay(15 * 1000L)
             } else {
                 Log.d("NoPermission", "Permission not granted")
                 // Delay before checking again
-                delay(5 * 60 * 1000L)
+                delay(15 * 1000L)
             }
         }
     }
@@ -126,7 +120,6 @@ class UsageStatsService : Service() {
                 } else {
                     Log.d("FileCheck", "File size after write: ${file.length()} bytes.")
                 }
-
                 lastRecordedApp = currentApp
             } catch (e: IOException) {
                 e.printStackTrace()
