@@ -108,6 +108,14 @@ class UsageStatsService : Service() {
             val file = File(getExternalFilesDir(null), fileName)
 
             try {
+                if (!file.exists()) {
+                    file.createNewFile()
+                    Log.d("FileCreatiodddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddn", "File created: ${file.absolutePath}")
+                }
+
+                Log.d("wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww", "File created: ${file.absolutePath}")
+
+
                 FileOutputStream(file, true).use { fos ->
                     OutputStreamWriter(fos).use { writer ->
                         writer.write(data)
