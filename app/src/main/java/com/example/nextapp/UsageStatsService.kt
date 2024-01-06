@@ -5,6 +5,8 @@ import android.app.AppOpsManager
 import android.app.Service
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
@@ -40,6 +42,7 @@ class UsageStatsService : Service() {
         }
     }
 
+    private val recentlyOpenedApps = mutableSetOf<String>()
     @SuppressLint("ServiceCast")
     private suspend fun collectUsageStats() {
         while (true) {
@@ -62,6 +65,12 @@ class UsageStatsService : Service() {
                         val currentApp = mySortedMap[mySortedMap.lastKey()]!!.packageName
                         val timeStamp = mySortedMap[mySortedMap.lastKey()]!!.lastTimeUsed
 
+                        // Store the recently opened app in the list
+                        storeRecentlyOpenedApp(currentApp)
+
+                        // Save the recentlyOpenedApps in SharedPreferences
+                        saveRecentlyOpenedAppsToPrefs()
+
                         // Send data to CSV
                         sendDataToCsv(currentApp, timeStamp)
                         Log.d("AppList", "sent")
@@ -75,6 +84,37 @@ class UsageStatsService : Service() {
                 // Delay before checking again
                 delay(15 * 1000L)
             }
+        }
+    }
+
+    private fun storeRecentlyOpenedApp(appPackageName: String) {
+        // limit list size
+        val maxRecentApps = 4
+
+        // add current package
+        recentlyOpenedApps.add(appPackageName)
+
+        while (recentlyOpenedApps.size > maxRecentApps) {
+            recentlyOpenedApps.remove(recentlyOpenedApps.first())
+        }
+
+        Log.d("storeopen", appPackageName)
+    }
+
+    private fun saveRecentlyOpenedAppsToPrefs() {
+        // Save the recentlyOpenedApps list to SharedPreferences
+        val sharedPreferences = getSharedPreferences("app_preferences", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.putStringSet("recentlyOpenedApps", recentlyOpenedApps.toSet())
+        editor.apply()
+        // update widget each time the list is updated
+        val appWidgetManager = AppWidgetManager.getInstance(this)
+        val appWidgetIds = appWidgetManager.getAppWidgetIds(
+            ComponentName(this, NextAppWidget::class.java)
+        )
+        for (appWidgetId in appWidgetIds) {
+            val recentlyOpenedAppsSet: Set<String> = recentlyOpenedApps.toSet()
+            updateAppWidget(this, appWidgetManager, appWidgetId, recentlyOpenedAppsSet)
         }
     }
 
@@ -110,11 +150,7 @@ class UsageStatsService : Service() {
             try {
                 if (!file.exists()) {
                     file.createNewFile()
-                    Log.d("FileCreatiodddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddn", "File created: ${file.absolutePath}")
                 }
-
-                Log.d("wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww", "File created: ${file.absolutePath}")
-
 
                 FileOutputStream(file, true).use { fos ->
                     OutputStreamWriter(fos).use { writer ->
