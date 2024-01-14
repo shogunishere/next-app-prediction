@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -21,6 +22,7 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
+
 
 /**
  * Implementation of App Widget functionality.
@@ -292,8 +294,8 @@ internal fun updateAppWidget(
         for ((index, packageName) in predictedApps.take(4).withIndex()) {
             println("Predicted package name: $packageName")
 
-            // Set the text of the button to the package name
-            views.setTextViewText(buttonIds[index], packageName)
+            val appName = getApplicationLabel(context, packageName)
+            views.setTextViewText(buttonIds[index], appName)
 
             // Attempt to create an Intent to launch the app
             val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
@@ -349,6 +351,30 @@ fun writePredictionsToCSV(predictions: List<String>, actualApp: String?, context
     }
 }
 
+fun getApplicationLabel(context: Context, packageName: String): String {
+    val packageManager: PackageManager = context.packageManager
+
+    try {
+        val applicationInfo: ApplicationInfo =
+            packageManager.getApplicationInfo(packageName, 0)
+        return packageManager.getApplicationLabel(applicationInfo).toString()
+    } catch (e: PackageManager.NameNotFoundException) {
+        e.printStackTrace()
+    }
+
+    return packageName // En cas d'échec, renvoie le nom du package
+}
+
+fun getApplicationIcon(context: Context, packageName: String): Drawable? {
+    val packageManager: PackageManager = context.packageManager
+    return try {
+        val appInfo = packageManager.getApplicationInfo(packageName, 0)
+        packageManager.getApplicationIcon(appInfo)
+    } catch (e: PackageManager.NameNotFoundException) {
+        e.printStackTrace()
+        null
+    }
+}
 
 fun PackageManager.getLaunchIntentForPackageExplicitly(packageName: String): Intent? {
     // Query for the main activity of the app
@@ -356,6 +382,7 @@ fun PackageManager.getLaunchIntentForPackageExplicitly(packageName: String): Int
         addCategory(Intent.CATEGORY_LAUNCHER)
         setPackage(packageName)
     }
+    
     val resolveInfo = queryIntentActivities(intent, 0).firstOrNull()
     return resolveInfo?.let {
         Intent().setComponent(ComponentName(packageName, it.activityInfo.name))
