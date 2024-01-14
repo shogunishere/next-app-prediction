@@ -51,6 +51,9 @@ android {
 }
 
 dependencies {
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.2.0") // For data preprocessing support
+    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
 
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")

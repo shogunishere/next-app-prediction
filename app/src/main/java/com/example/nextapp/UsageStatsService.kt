@@ -43,6 +43,7 @@ class UsageStatsService : Service() {
     }
 
     private val recentlyOpenedApps = mutableSetOf<String>()
+
     @SuppressLint("ServiceCast")
     private suspend fun collectUsageStats() {
         while (true) {
@@ -55,7 +56,9 @@ class UsageStatsService : Service() {
                 )
 
                 Log.d("AppList", "Usage Stats: $appList")
-                if (appList != null && appList.isNotEmpty()) {
+                if (appList.isNullOrEmpty()) {
+                    Log.d("AppList", "No usage stats available.")
+                } else {
                     val mySortedMap = TreeMap<Long, UsageStats>()
                     for (usageStats in appList) {
                         mySortedMap[usageStats.lastTimeUsed] = usageStats
@@ -76,14 +79,12 @@ class UsageStatsService : Service() {
                         Log.d("AppList", "sent")
                     }
                 }
-
-                // Delay for 20 seconds before the next iteration
-                delay(15 * 1000L)
             } else {
                 Log.d("NoPermission", "Permission not granted")
-                // Delay before checking again
-                delay(15 * 1000L)
             }
+
+            // Delay for 5 seconds before the next iteration, regardless of data availability
+            delay(5 * 1000L)
         }
     }
 
@@ -102,11 +103,11 @@ class UsageStatsService : Service() {
     }
 
     private fun saveRecentlyOpenedAppsToPrefs() {
-        // Save the recentlyOpenedApps list to SharedPreferences
         val sharedPreferences = getSharedPreferences("app_preferences", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
         editor.putStringSet("recentlyOpenedApps", recentlyOpenedApps.toSet())
         editor.apply()
+
         // update widget each time the list is updated
         val appWidgetManager = AppWidgetManager.getInstance(this)
         val appWidgetIds = appWidgetManager.getAppWidgetIds(
@@ -114,6 +115,7 @@ class UsageStatsService : Service() {
         )
         for (appWidgetId in appWidgetIds) {
             val recentlyOpenedAppsSet: Set<String> = recentlyOpenedApps.toSet()
+            Log.d("updateAppWidget", "updateAppWidget")
             updateAppWidget(this, appWidgetManager, appWidgetId, recentlyOpenedAppsSet)
         }
     }
@@ -179,39 +181,6 @@ class UsageStatsService : Service() {
             sdf.format(netDate)
         } catch (e: Exception) {
             e.toString()
-        }
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    private fun sendDataToServer(currentApp: String, timeStamp: Long) {
-        GlobalScope.launch(Dispatchers.IO) {
-            try {
-                val url = URL("http://yourserver.com/api/trackAppUsage")
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8")
-                conn.setRequestProperty("Accept", "application/json")
-                conn.doOutput = true
-                conn.doInput = true
-
-                val jsonParam = JSONObject()
-                jsonParam.put("timestamp", timeStamp)
-                jsonParam.put("appName", currentApp)
-
-                Log.i("JSON", jsonParam.toString())
-
-                val os = DataOutputStream(conn.outputStream)
-                os.writeBytes(jsonParam.toString())
-                os.flush()
-                os.close()
-
-                Log.i("STATUS", conn.responseCode.toString())
-                Log.i("MSG", conn.responseMessage)
-
-                conn.disconnect()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
         }
     }
 }
